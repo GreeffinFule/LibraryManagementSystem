@@ -8,6 +8,8 @@ public class LibraryManagementSystem {
         //Verifying and fulfilling prerequisites
         setupSQL();
         createTables();
+
+        //Begin
         menuPrintLoop();
     }
 
@@ -43,7 +45,7 @@ public class LibraryManagementSystem {
     private static void setupSQL() {
         try{
             Class.forName("com.mysql.cj.jdbc.Driver");
-            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/library", "root", "PASSWORD");
+            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/library", "root", "griff.in");
         }catch (Exception e){
             System.out.println("Error: " + e.getMessage());
         }
@@ -182,26 +184,19 @@ public class LibraryManagementSystem {
             return;
         }
 
-        //issue book
+        //issue book and print Transaction ID
         try {
-            PreparedStatement preparedStatement = connection.prepareStatement("INSERT INTO libraryRecord(student_Id, BookId, DateOfIssue, ReturnDate, status) VALUES (?, ?, curdate(), curdate()+interval 3 month, 'issued')");
+            PreparedStatement preparedStatement = connection.prepareStatement("INSERT INTO libraryRecord(student_Id, BookId, DateOfIssue, ReturnDate, status) VALUES (?, ?, curdate(), curdate()+interval 3 month, 'issued')",Statement.RETURN_GENERATED_KEYS);
             preparedStatement.setInt(1, student_Id);
             preparedStatement.setInt(2, book_Id);
             preparedStatement.executeUpdate();
             System.out.println("Book issued successfully!");
+            ResultSet rs = preparedStatement.getGeneratedKeys();
+            rs.next();
+            System.out.println("Transaction ID:" + rs.getString(1));
         } catch (Exception e) {
             System.out.println("Error: " + e.getMessage());
             return;
-        }
-
-        //print transaction details + id
-        try {
-            PreparedStatement preparedStatement = connection.prepareStatement("SELECT max(TransactionId) from libraryRecord");
-            ResultSet rs = preparedStatement.executeQuery();
-            rs.next();
-            System.out.println("Transaction Id: " + rs.getInt(1));
-        } catch (Exception e) {
-            System.out.println("Error: " + e.getMessage());
         }
 
         //update Student Profile
@@ -447,5 +442,8 @@ public class LibraryManagementSystem {
 
     //-----------------------------------------
 }
+// TODO
+// 1. Create a penalty system in returnBook. Calculate curDate() - ReturnDate... if >0.... Multiply by Per Day penalty factor and option to continue then return book
+// 2. Make printing look like table by properly positioning text
 
 
