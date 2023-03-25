@@ -186,7 +186,7 @@ public class LibraryManagementSystem {
 
         //issue book and print Transaction ID
         try {
-            PreparedStatement preparedStatement = connection.prepareStatement("INSERT INTO libraryRecord(student_Id, BookId, DateOfIssue, ReturnDate, status) VALUES (?, ?, curdate(), curdate()+interval 3 month, 'issued')",Statement.RETURN_GENERATED_KEYS);
+            PreparedStatement preparedStatement = connection.prepareStatement("INSERT INTO libraryRecord(student_Id, BookId, DateOfIssue, status) VALUES (?, ?, curDate(), 'issued')",Statement.RETURN_GENERATED_KEYS);
             preparedStatement.setInt(1, student_Id);
             preparedStatement.setInt(2, book_Id);
             preparedStatement.executeUpdate();
@@ -216,7 +216,6 @@ public class LibraryManagementSystem {
             preparedStatement.executeUpdate();
         } catch (Exception e) {
             System.out.println("Error: " + e.getMessage());
-            return;
         }
     }
 
@@ -234,9 +233,24 @@ public class LibraryManagementSystem {
             return;
         }
         //penalty
-
+        int penalty = 0;
         try {
-            PreparedStatement preparedStatement = connection.prepareStatement("UPDATE libraryRecord SET status = 'returned' where TransactionId = ?");
+            PreparedStatement preparedStatement = connection.prepareStatement("SELECT dateDiff(curDate(), dateOfIssue) from libraryRecord where transactionId = ?;");
+            preparedStatement.setInt(1, TransactionId);
+            ResultSet rs = preparedStatement.executeQuery();
+            rs.next();
+            int days = rs.getInt(1);
+            if (days>5)
+                penalty = days-5;
+            System.out.println("Penalty: Rs."+ penalty);
+        } catch (Exception e) {
+            System.out.println("Error: " + e.getMessage());
+            return;
+        }
+
+        //update transaction status
+        try {
+            PreparedStatement preparedStatement = connection.prepareStatement("UPDATE libraryRecord SET status = 'returned', ReturnDate = curDate() where TransactionId = ?");
             preparedStatement.setInt(1, TransactionId);
             preparedStatement.executeUpdate();
             System.out.println("Book returned successfully!");
@@ -275,7 +289,6 @@ public class LibraryManagementSystem {
             preparedStatement.executeUpdate();
         } catch (Exception e) {
             System.out.println("Error: " + e.getMessage());
-            return;
         }
     }
 
@@ -283,10 +296,10 @@ public class LibraryManagementSystem {
         try {
             PreparedStatement preparedStatement = connection.prepareStatement("SELECT * from libraryBooks;");
             ResultSet rs = preparedStatement.executeQuery();
-            ResultSetMetaData rsmd = rs.getMetaData();
-            int columnsNumber = rsmd.getColumnCount();
+            ResultSetMetaData rsMetaData = rs.getMetaData();
+            int columnsNumber = rsMetaData.getColumnCount();
             for(int i = 1 ; i <= columnsNumber; i++){
-                System.out.print(rsmd.getColumnName(i) + " ");
+                System.out.print(rsMetaData.getColumnName(i) + " ");
             }
             System.out.println();
             while (rs.next()) {
@@ -304,10 +317,10 @@ public class LibraryManagementSystem {
         try {
             PreparedStatement preparedStatement = connection.prepareStatement("SELECT * from studentDetails;");
             ResultSet rs = preparedStatement.executeQuery();
-            ResultSetMetaData rsmd = rs.getMetaData();
-            int columnsNumber = rsmd.getColumnCount();
+            ResultSetMetaData rsMetaData = rs.getMetaData();
+            int columnsNumber = rsMetaData.getColumnCount();
             for(int i = 1 ; i <= columnsNumber; i++){
-                System.out.print(rsmd.getColumnName(i) + " ");
+                System.out.print(rsMetaData.getColumnName(i) + " ");
             }
             System.out.println();
             while (rs.next()) {
@@ -325,10 +338,10 @@ public class LibraryManagementSystem {
         try {
             PreparedStatement preparedStatement = connection.prepareStatement("SELECT * from libraryRecord;");
             ResultSet rs = preparedStatement.executeQuery();
-            ResultSetMetaData rsmd = rs.getMetaData();
-            int columnsNumber = rsmd.getColumnCount();
+            ResultSetMetaData rsMetaData = rs.getMetaData();
+            int columnsNumber = rsMetaData.getColumnCount();
             for(int i = 1 ; i <= columnsNumber; i++){
-                System.out.print(rsmd.getColumnName(i) + " ");
+                System.out.print(rsMetaData.getColumnName(i) + " ");
             }
             System.out.println();
             while (rs.next()) {
@@ -443,7 +456,6 @@ public class LibraryManagementSystem {
     //-----------------------------------------
 }
 // TODO
-// 1. Create a penalty system in returnBook. Calculate curDate() - ReturnDate... if >0.... Multiply by Per Day penalty factor and option to continue then return book
-// 2. Make printing look like table by properly positioning text
+// 1. Make printing look like table by properly positioning text
 
 
